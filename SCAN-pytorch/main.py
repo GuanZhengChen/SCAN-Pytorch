@@ -86,9 +86,9 @@ features =  sparse_to_tuple(fea_train.tocoo())
 
 #concate adjacant matrix and features to get Fn
 Fn_train = sparse_to_tuple(sp.hstack((adj_train,fea_train)))
-Fn_train=torch.sparse.FloatTensor(torch.LongTensor(Fn_train[0].astype(np.int64)).t(),torch.FloatTensor(Fn_train[1]),Fn_train[2]) 
+Fn_train=torch.sparse.FloatTensor(torch.LongTensor(Fn_train[0].astype(np.int64)).t(),torch.FloatTensor(Fn_train[1]),Fn_train[2]).to(device) 
 Fa_train = sparse_to_tuple(fea_train.tocoo())
-Fa_train=torch.sparse.FloatTensor(torch.LongTensor(Fa_train[0].astype(np.int64)).t(),torch.FloatTensor(Fa_train[1]),Fa_train[2])        
+Fa_train=torch.sparse.FloatTensor(torch.LongTensor(Fa_train[0].astype(np.int64)).t(),torch.FloatTensor(Fa_train[1]),Fa_train[2]).to(device)        
 
 
 # Create model
@@ -96,7 +96,6 @@ adj_train_mat =  preprocess_graph(adj_train)
 adj_train_mat=torch.sparse.FloatTensor(torch.LongTensor(adj_train_mat[0].astype(np.int64)).t(),torch.FloatTensor(adj_train_mat[1]),adj_train_mat[2]).to(device) 
 
 y_train = y_train.float().to(device)
-labels_pos = labels_pos.to(device)
 model = SCVA(args.temperature,args.hidden1,args.hidden2,adj_train_mat,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,one_gcn,device).to(device)
 pos_weight_u = float(adj.shape[0] * adj.shape[0] - adj.sum()) / adj.sum()
 norm_u = adj.shape[0] * adj.shape[0] / float((adj.shape[0] * adj.shape[0] - adj.sum()) * 2)

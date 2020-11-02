@@ -74,7 +74,7 @@ class SCVA(nn.Module):
         col = self.y_train.size()[1]
         temp_lp=self.labels_pos.repeat(col).reshape(row,col)
         #one hot encoding for label data
-        y_pred_reconstruct = torch.where(torch.from_numpy(temp_lp),self.y_train, self.y_pred)
+        y_pred_reconstruct = torch.where(torch.from_numpy(temp_lp).to(self.device),self.y_train, self.y_pred)
         return y_pred_reconstruct
     
     def yz(self):
@@ -85,7 +85,7 @@ class SCVA(nn.Module):
         col = self.y_train.size()[1]
         temp_lp=self.labels_pos.repeat(col).reshape(row,col)
         # temp_lp=np.tile(self.labels_pos,(len(self.labels_pos),7))
-        yz = torch.where(torch.from_numpy(temp_lp),self.y_train, self.y_pred_prob)
+        yz = torch.where(torch.from_numpy(temp_lp).to(self.device),self.y_train, self.y_pred_prob)
         return yz
 
     def forward(self,Fn,Fa):
