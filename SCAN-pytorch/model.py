@@ -11,7 +11,7 @@ import torch.sparse
 
 class SCVA(nn.Module):
 
-    def __init__(self,temperature,hidden1,hidden2,adj,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,one_gcn=True,dropout=0.):
+    def __init__(self,temperature,hidden1,hidden2,adj,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,one_gcn=True,dropout=0.,device='cpu'):
         super(SCVA, self).__init__()
 
         self.hidden1_dim=hidden1
@@ -26,6 +26,7 @@ class SCVA(nn.Module):
         self.labels_pos = labels_pos
         self.y_train = y_train
         self.one_gcn = one_gcn
+        self.device = device
         self.hidden1 = Dense(input_dim = self.num_nodes + self.num_feas,output_dim=hidden1,
                         sparse_inputs=self.one_gcn,dropout=self.dropout)
                              

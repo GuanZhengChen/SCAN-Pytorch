@@ -19,6 +19,8 @@ from classification import embedding_classifier
 
 # Train on CPU (hide GPU) due to memory constraints
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
+use_gpu = torch.cuda.is_available()
+device = torch.device('cuda' if use_gpu else 'cpu')
 # Settings
 parser = argparse.ArgumentParser()
 parser.add_argument('--learning_rate', type=float, default=0.01,
@@ -91,11 +93,11 @@ Fa_train=torch.sparse.FloatTensor(torch.LongTensor(Fa_train[0].astype(np.int64))
 
 # Create model
 adj_train_mat =  preprocess_graph(adj_train)
-adj_train_mat=torch.sparse.FloatTensor(torch.LongTensor(adj_train_mat[0].astype(np.int64)).t(),torch.FloatTensor(adj_train_mat[1]),adj_train_mat[2]) 
+adj_train_mat=torch.sparse.FloatTensor(torch.LongTensor(adj_train_mat[0].astype(np.int64)).t(),torch.FloatTensor(adj_train_mat[1]),adj_train_mat[2]).to(device) 
 
-y_train = y_train.float()
-
-model = SCVA(args.temperature,args.hidden1,args.hidden2,adj_train_mat,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,one_gcn)
+y_train = y_train.float().to(device)
+labels_pos = labels_pos.to(device)
+model = SCVA(args.temperature,args.hidden1,args.hidden2,adj_train_mat,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,one_gcn,device).to(device)
 pos_weight_u = float(adj.shape[0] * adj.shape[0] - adj.sum()) / adj.sum()
 norm_u = adj.shape[0] * adj.shape[0] / float((adj.shape[0] * adj.shape[0] - adj.sum()) * 2)
 pos_weight_a = float(features[2][0] * features[2][1] - len(features[1])) / len(features[1])
@@ -114,7 +116,10 @@ def get_roc_score(edges_pos, edges_neg,preds_sub_u):
 
     # Predict on test set of edges
     # adj_rec = sess.run(model.reconstructions[0], feed_dict=feed_dict).reshape([num_nodes, num_nodes])
-    adj_rec=preds_sub_u.view(num_nodes,num_nodes).data.numpy()
+    if(use_gpu):
+        adj_rec=preds_sub_u.view(num_nodes,num_nodes).cpu().data.numpy()
+    else:
+        adj_rec=preds_sub_u.view(num_nodes,num_nodes).data.numpy()
     preds = []
     pos = []
     for e in edges_pos:
@@ -143,7 +148,10 @@ def get_roc_score_a(feas_pos, feas_neg,preds_sub_a):
 
     # Predict on test set of edges
     # fea_rec = sess.run(model.reconstructions[1], feed_dict=feed_dict).reshape([num_nodes, num_features])
-    fea_rec = preds_sub_a.view(num_nodes, num_features).data.numpy()
+    if(use_gpu):
+        fea_rec = preds_sub_a.view(num_nodes, num_features).cpu().data.numpy()
+    else:
+        fea_rec = preds_sub_a.view(num_nodes, num_features).data.numpy()
     preds = []
     pos = []
     for e in feas_pos:
@@ -189,8 +197,8 @@ for epoch in range(args.epochs):
     model.train()
     optimizer.zero_grad()
     preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob=model(Fn_train,Fa_train)
-    labels_sub_u=torch.from_numpy(adj_orig.toarray()).flatten().float()
-    labels_sub_a=torch.from_numpy(features_orig.toarray()).flatten().float()
+    labels_sub_u=torch.from_numpy(adj_orig.toarray()).flatten().float().to(device)
+    labels_sub_a=torch.from_numpy(features_orig.toarray()).flatten().float().to(device)
 
     # compute reconstruction loss
     cost_u = norm_u * torch.mean(weighted_cross_entropy_with_logits(logits=preds_sub_u, targets=labels_sub_u, pos_weight=pos_weight_u))
