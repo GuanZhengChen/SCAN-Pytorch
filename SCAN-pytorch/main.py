@@ -47,7 +47,7 @@ parser.add_argument('--alpha', type=float, default=0.1,
                     help='alpha.')
 parser.add_argument('--dataset', type=str, default="BlogCatalog",
                     help='Dataset string.')
-args = parser.parse_args()
+args = parser.parse_args(args=[])
 dataset_str = args.dataset
 weight_decay = args.weight_decay
 
@@ -195,9 +195,12 @@ for epoch in range(args.epochs):
     t = time.time()
     model.train()
     optimizer.zero_grad()
-    preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob=model(Fn_train,Fa_train)
-    labels_sub_u=torch.from_numpy(adj_orig.toarray()).flatten().float().to(device)
-    labels_sub_a=torch.from_numpy(features_orig.toarray()).flatten().float().to(device)
+    outputs = model(Fn_train,Fa_train)
+    if(use_gpu):
+        outputs = outputs.cpu()
+    preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob = outputs
+    labels_sub_u=torch.from_numpy(adj_orig.toarray()).flatten().float()
+    labels_sub_a=torch.from_numpy(features_orig.toarray()).flatten().float()
 
     # compute reconstruction loss
     cost_u = norm_u * torch.mean(weighted_cross_entropy_with_logits(logits=preds_sub_u, targets=labels_sub_u, pos_weight=pos_weight_u))
@@ -275,7 +278,10 @@ for epoch in range(args.epochs):
 
 print("Optimization Finished!")    
 
-preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob=model(Fn_train,Fa_train)
+outputs = model(Fn_train,Fa_train)
+if(use_gpu):
+    outputs = outputs.cpu()
+preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob = outputs
 roc_score, ap_score = get_roc_score(test_edges, test_edges_false,preds_sub_u)
 roc_score_a, ap_score_a = get_roc_score_a(test_feas, test_feas_false,preds_sub_a)
 
