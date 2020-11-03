@@ -33,3 +33,29 @@ def weighted_cross_entropy_with_logits(logits, targets, pos_weight):
 ```bash
 python train.py
 ```
+## Result
+
+
+The  Link prediction performance AUC&AP score :
+
+| Dataset     |  AUC  |  AP   |
+| :---------- | :---: | :---: |
+| BLOGCATALOG | 0.844 | 0.850 |
+| CORA        | 0.972 | 0.972 |
+| FLICKR      | 0.889 | 0.906 |
+
+The  Attribute inference performance AUC&AP score :
+
+| Dataset     |  AUC  |  AP   |
+| :---------- | :---: | :---: |
+| BLOGCATALOG | 0.886 | 0.888 |
+| CORA        | 0.822 | 0.838 |
+| FLICKR      | 0.864 | 0.859 |
+
+The  node classification performance accuracy :
+
+| Dataset     |  ACC of SCVA_SVM  |  ACC of SCVA_DIS   |
+| :---------- | :---: | :---: |
+| BLOGCATALOG | 0.834 | 0.844 |
+| CORA        | 0.736 | 0.822 |
+| FLICKR      | 0.695 | 0.800 |

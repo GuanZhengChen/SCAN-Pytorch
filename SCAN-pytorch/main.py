@@ -96,7 +96,7 @@ adj_train_mat =  preprocess_graph(adj_train)
 adj_train_mat=torch.sparse.FloatTensor(torch.LongTensor(adj_train_mat[0].astype(np.int64)).t(),torch.FloatTensor(adj_train_mat[1]),adj_train_mat[2]).to(device) 
 
 y_train = y_train.float().to(device)
-model = SCVA(args.temperature,args.hidden1,args.hidden2,adj_train_mat,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,one_gcn,device).to(device)
+model = SCVA(args.temperature,args.hidden1,args.hidden2,adj_train_mat,num_features, num_nodes, features_nonzero,num_labels,labels_pos,y_train,device,one_gcn).to(device)
 pos_weight_u = float(adj.shape[0] * adj.shape[0] - adj.sum()) / adj.sum()
 norm_u = adj.shape[0] * adj.shape[0] / float((adj.shape[0] * adj.shape[0] - adj.sum()) * 2)
 pos_weight_a = float(features[2][0] * features[2][1] - len(features[1])) / len(features[1])
@@ -195,12 +195,9 @@ for epoch in range(args.epochs):
     t = time.time()
     model.train()
     optimizer.zero_grad()
-    outputs = model(Fn_train,Fa_train)
-    if(use_gpu):
-        outputs = outputs.cpu()
-    preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob = outputs
-    labels_sub_u=torch.from_numpy(adj_orig.toarray()).flatten().float()
-    labels_sub_a=torch.from_numpy(features_orig.toarray()).flatten().float()
+    preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob = model(Fn_train,Fa_train)
+    labels_sub_u=torch.from_numpy(adj_orig.toarray()).flatten().float().to(device)
+    labels_sub_a=torch.from_numpy(features_orig.toarray()).flatten().float().to(device)
 
     # compute reconstruction loss
     cost_u = norm_u * torch.mean(weighted_cross_entropy_with_logits(logits=preds_sub_u, targets=labels_sub_u, pos_weight=pos_weight_u))
@@ -278,14 +275,17 @@ for epoch in range(args.epochs):
 
 print("Optimization Finished!")    
 
-outputs = model(Fn_train,Fa_train)
-if(use_gpu):
-    outputs = outputs.cpu()
-preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob = outputs
+
+preds_sub_u, preds_sub_a,z_u_mean,z_u_log_std,z_a_mean,z_a_log_std,y_pred_logits,y_pred_reconstruction,y_pred_prob = model(Fn_train,Fa_train)
 roc_score, ap_score = get_roc_score(test_edges, test_edges_false,preds_sub_u)
 roc_score_a, ap_score_a = get_roc_score_a(test_feas, test_feas_false,preds_sub_a)
 
-
+if use_gpu:
+    z_u_mean = z_u_mean.cpu()
+    z_a_mean = z_a_mean.cpu()
+    z_u_log_std = z_u_log_std.cpu()
+    z_a_log_std = z_a_log_std.cpu()
+    y_pred_prob = y_pred_prob.cpu()
 
 np.save(embedding_node_mean_result_file, z_u_mean.data.numpy())
 np.save(embedding_attr_mean_result_file, z_a_mean.data.numpy())
