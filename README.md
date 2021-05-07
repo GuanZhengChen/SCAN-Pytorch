@@ -1,6 +1,6 @@
 ## SCAN: Semi-supervisedly Co-embedding Attributed Networks
 This repository contains the Python&Pytorch implementation for SCAN. Further details about SCAN can be found in 
-The paper:
+this paper:
 > Zaiqiao Meng, Shangsong Liang, Jinyuan Fang, Teng Xiao. Semi-supervisedly Co-embedding Attributed Networks. (NeurIPS 2019)
 
 The orignal tensorflow implementation for SCAN can be found in [SCAN](https://github.com/mengzaiqiao/SCAN)
